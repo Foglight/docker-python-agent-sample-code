@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<types>
+	<type name="DockerModel" extends="CollectionModelRoot">
+		<property name="name" type="String" is-identity="true" default="DockerModel" />
+
+		<property name="hosts" type="DockerHost" is-many="true" is-containment="true">
+			<annotation name="DerivationExprType" value="Script" />
+			<annotation name="DerivationExpression">
+				<value><![CDATA[#!DockerHost#.topologyObjects]]></value>
+			</annotation>
+		</property>
+
+		<property name="containers" type="DockerContainer" is-many="true" is-containment="true">
+			<annotation name="DerivationExprType" value="Script" />
+			<annotation name="DerivationExpression">
+				<value><![CDATA[#!DockerContainer#.topologyObjects]]></value>
+			</annotation>
+		</property>
+
+	</type>
+
+	<type name="DockerHost" extends="HostExtension">
+		<annotation name="DomainRoot" />
+        <property name="id" type="String" is-identity="true"/>
+		<property name="host" type="Host" is-identity="false" />
+		<property name="name" type="String" is-identity="false">
+            <annotation name="DerivationExprType" value="Script"/>
+            <annotation name="DerivationExpression" value="scope?.host?.name"/>
+		</property>
+		<property name="containers" type="DockerContainer" is-many="true" is-containment="false" />
+	</type>
+
+	<type name="DockerContainer" extends="HostExtension">
+		<property name="id" type="String" is-identity="true" />
+		<property name="dockerHost" type="DockerHost" is-identity="true" />
+		<property name="name" type="String" is-identity="false" />
+		<property name="host" type="Host" />
+		<property name="status" type="StringObservation" is-containment="true" />
+
+		<property name="memory" type="DockerContainerMemory" is-containment="true"/>
+	</type>
+
+	<type name="DockerContainerMemory" extends="DockerContainerComponent">
+		<property name="hostMemory" type="Memory" is-containment="true" />
+		<property name="usage" type="Metric" is-containment="true" unit-name="megabyte"/>
+		<property name="maxUsage" type="Metric" is-containment="true" unit-name="megabyte"/>
+	</type>
+
+	<type name="DockerContainerComponent" extends="TopologyObject">
+		<annotation name="Abstract" />
+		<property name="container" type="DockerContainer" is-containment="false" is-identity="true">
+			<annotation name="DataTreeView" value="advanced" />
+		</property>
+	</type>
+
+</types>

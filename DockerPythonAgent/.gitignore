@@ -1,0 +1,5 @@
+**/*$py.class
+**/*.pyc
+/state/
+/.idea/
+DockerPythonAgent-*.car

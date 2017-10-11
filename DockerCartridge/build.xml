@@ -1,0 +1,145 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+ QUEST SOFTWARE PROPRIETARY INFORMATION
+
+ This software is confidential.  Quest Software Inc., or one of its
+ subsidiaries, has supplied this software to you under terms of a
+ license agreement, nondisclosure agreement or both.
+
+ You may not copy, disclose, or use this software except in accordance with
+ those terms.
+
+
+ Copyright 2017 Quest Software Inc.
+ ALL RIGHTS RESERVED.
+
+ QUEST SOFTWARE INC. MAKES NO REPRESENTATIONS OR
+ WARRANTIES ABOUT THE SUITABILITY OF THE SOFTWARE,
+ EITHER EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED
+ TO THE IMPLIED WARRANTIES OF MERCHANTABILITY,
+ FITNESS FOR A PARTICULAR PURPOSE, OR
+ NON-INFRINGEMENT.  QUEST SOFTWARE SHALL NOT BE
+ LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE
+ AS A RESULT OF USING, MODIFYING OR DISTRIBUTING
+ THIS SOFTWARE OR ITS DERIVATIVES.
+ --> 
+
+<!--
+  This Ant build.xml file requires version 1.7.0 (or later) of Ant.
+  -->
+<project name="DockerBase" default="dist" xmlns:fglam="fglam:/ant/macros">
+
+    <description>
+      This Ant build file can compile, package, test, and deploy the 
+      Docker/DockerAgent agent.
+    </description>
+
+    <!--
+      Load up a (completely optional) local properties file. You can use this file
+      to override any of the Ant properties in the build file. Or perhaps to
+      specify the location of the FglAM dev kit like this:
+
+         fglam.devkit.home=C:/Quest_Software/FglAM-Dev-Kit
+
+      or to set the location of your server install (for deployment of the cartridge)
+
+         fgl.server.home=C:/Quest_Software/FMS
+    -->
+    <property file="${basedir}/build.properties"/>
+    <property file="${basedir}/local.build.properties"/>
+
+    <!-- Add the external environment and find the FglAM installation -->
+    <property environment="env"/>
+    <condition property="fglam.devkit.home" value="${env.FGLAM_DEVKIT_HOME}">
+        <isset property="env.FGLAM_DEVKIT_HOME"/>
+    </condition>
+
+    <fail>
+        <condition><not><isset property="fglam.devkit.home"/></not></condition>.
+        The Ant property (fglam.devkit.home) that determines which FglAM dev kit to
+        use has not been set. You can set this as either an Ant property
+        (perhaps in ${basedir}/local.build.properties
+        or on the command line with -Dfglam.devkit.home) or via the environment
+        variable FGLAM_DEVKIT_HOME.
+    </fail> 
+
+    <fail>
+        <condition><not>
+          <and>
+              <available file="${fglam.devkit.home}" type="dir"/>
+              <available file="${fglam.devkit.home}/buildtools/lib/devkit-ant.jar" type="file"/>
+          </and>
+        </not></condition>.
+        The specified FglAM developer's kit location, ${fglam.devkit.home},
+        does not appear to exist as a valid directory or does not contain a
+        recognized FglAM developer's kit.
+    </fail>
+
+    <!-- Import the FglAM tools -->
+    <import file="${fglam.devkit.home}/buildtools/fglam-ant-macros.xml"/>
+
+    <!-- Define some directories used throughout the build process -->
+    <property name="dockeragent.src.dir"         value="${basedir}/src"/>
+    <property name="dockeragent.config.dir"      value="${basedir}/config"/>
+    <property name="dockeragent.build.dir"       value="${basedir}/build"/>
+    <property name="dockeragent.build.test.dir"  value="${dockeragent.build.dir}/test"/>
+    <property name="dockeragent.tooling.output"  value="${dockeragent.build.dir}/tooling"/>
+    <property name="dockeragent.dist.dir"        value="${dockeragent.build.dir}/dist"/>
+    <property name="dockeragent.test.dir"        value="${basedir}/test"/>
+    <property name="dockeragent.java.test.dir"   value="${dockeragent.test.dir}/java"/>
+    <property name="dockeragent.lib.dir"         value="${basedir}/lib"/>
+    <property name="dockerpythonagent.dir"       value="${basedir}/../DockerPythonAgent"/>
+
+    <target name="init">
+        <tstamp>
+            <format property="timestamp" pattern="yyyyMMdd-HHmm"/>
+        </tstamp>
+        <condition property="build.id" value="${dockeragent.agent-manifest.ver}-${timestamp}-${env.BUILD_NUMBER}" 
+				else="${timestamp}-dev">
+            <isset property="env.BUILD_NUMBER" />
+        </condition>
+    </target>
+
+    <!-- Creates a distribution which results in a FMS 5.0 deployeable cartridge file -->
+    <target name="dist" depends="clean,init"
+            description="Builds a deployable cartridge with a GAR installer">
+
+        <!-- create the dist output directory -->
+        <mkdir dir="${dockeragent.dist.dir}"/>
+
+        <echo level="info">Making topology in ${dockeragent.dist.dir}</echo>
+        <echo level="info">Topology file ${dockeragent.tooling.output}/DockerAgent-topology.xml</echo>
+
+        <car destdir="${dockeragent.dist.dir}" buildLocalizableCar="false">
+            <cartridge
+                    name="${dockeragent.agent-manifest.name}"
+                    final="true"
+                    version="${dockeragent.agent-manifest.ver}"
+                    buildid="${build.id}"
+                    author="FglAM Agent Developers">
+               
+                    <topologytypes
+                        name="${dockeragent.agent-manifest.name}-Topology-Types"
+                        version="${dockeragent.agent-manifest.ver}"
+                        file="${dockeragent.config.dir}/topology-types.xml"/>
+
+            </cartridge>
+			<fileset dir="${dockerpythonagent.dir}">
+			    <include name="*.car"/>
+			</fileset>
+        </car>
+
+    </target>
+
+
+    <!-- Removes all generated and compiled artifacts -->
+    <target name="clean"
+            description="Removes all generated and compiled artifacts">
+        <delete quiet="true" includeemptydirs="true">
+            <fileset dir="${dockeragent.build.dir}" includes="**"/>
+        </delete>        
+    </target>
+
+
+
+</project>

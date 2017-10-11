@@ -1,0 +1,7 @@
+[
+    {
+        "scriptPath"   : "docker-agent.py",
+        "interval"     : 1,
+        "intervalUnit" : "MINUTES"
+    }
+]
