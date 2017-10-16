@@ -1,4 +1,4 @@
 {
-  "host"   : "10.4.120.13",
-  "endPoint" : "http://10.4.120.13:4243"
+  "host"   : "ubuntu1604lts.westus.cloudapp.azure.com",
+  "endPoint" : "http://ubuntu1604lts.westus.cloudapp.azure.com:4243"
 }
